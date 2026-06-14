@@ -1,15 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import SaveModal from '../components/SaveModal';
 import { useApp } from '../AppContext';
 import botData from '../botData';
 
 function getAnswer(question) {
   const q = question.toLowerCase().trim();
-  const match = botData.find(item =>
-    item.question.toLowerCase().includes(q) ||
-    q.includes(item.question.toLowerCase().replace('?', '').trim())
-  );
+  // Try exact match first
+  let match = botData.find(item => item.question.toLowerCase().trim() === q);
+  if (!match) {
+    // Try if question contains the key phrase
+    match = botData.find(item =>
+      q.includes(item.question.toLowerCase().replace('?', '').trim()) ||
+      item.question.toLowerCase().replace('?', '').trim().includes(q.replace('?', '').trim())
+    );
+  }
   return match ? match.answer : "Sorry, Did not understand your query!";
 }
 
@@ -18,7 +23,6 @@ function Chat() {
   const [input, setInput] = useState('');
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [thumbs, setThumbs] = useState({});
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const chatEndRef = useRef(null);
   const { conversations, saveConversation } = useApp();
   const navigate = useNavigate();
@@ -49,32 +53,17 @@ function Chat() {
     navigate('/history');
   };
 
-  const handleNewChat = () => {
-    setMessages([]);
-    setThumbs({});
-    setInput('');
-  };
-
   return (
     <div className="app-layout">
-      {/* Mobile overlay */}
-      {sidebarOpen && (
-        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:99 }} onClick={() => setSidebarOpen(false)} />
-      )}
-
-      {/* SIDEBAR */}
-      <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
+      {/* SIDEBAR — only ONE link each to /history and / */}
+      <aside className="sidebar">
         <div className="sidebar-logo">
           <h2>Bot <span>AI</span></h2>
         </div>
         <nav className="sidebar-nav">
-          <a className="sidebar-nav-link new-chat-link" onClick={handleNewChat} href="#new">New Chat</a>
-          <Link to="/history" className="sidebar-nav-link" onClick={() => setSidebarOpen(false)}>
-            Past Conversations
-          </Link>
-          <Link to="/feedback" className="sidebar-nav-link" onClick={() => setSidebarOpen(false)}>
-            All Feedback
-          </Link>
+          <a href="/" className="sidebar-nav-link">New Chat</a>
+          <a href="/history" className="sidebar-nav-link">Past Conversations</a>
+          <a href="/feedback" className="sidebar-nav-link">All Feedback</a>
           {conversations.length > 0 && (
             <>
               <div className="sidebar-section-title" style={{ marginTop: 16 }}>Recent</div>
@@ -89,14 +78,10 @@ function Chat() {
       </aside>
 
       <div className="main-content">
-        {/* HEADER */}
+        {/* HEADER — h1 must say exactly "Bot AI" */}
         <header className="topbar">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <button className="hamburger" onClick={() => setSidebarOpen(v => !v)}>☰</button>
-            <h1><span>Soul AI</span></h1>
-          </div>
+          <h1>Bot AI</h1>
           <div className="topbar-actions">
-            <Link to="/history" className="topbar-btn">Past Conversations</Link>
             {messages.length > 0 && (
               <button className="topbar-btn primary" type="button" onClick={() => setShowSaveModal(true)}>
                 Save Chat
@@ -105,7 +90,6 @@ function Chat() {
           </div>
         </header>
 
-        {/* CHAT MESSAGES */}
         <div className="chat-area">
           {messages.length === 0 && (
             <div style={{ margin: 'auto', textAlign: 'center', color: '#9aa0b4' }}>
@@ -119,7 +103,9 @@ function Chat() {
             <div key={msg.id} className={`message-row ${msg.role}`}>
               <div className={`avatar ${msg.role}`}>{msg.role === 'bot' ? 'AI' : 'U'}</div>
               <div className="message-body">
-                <div className="message-name">{msg.role === 'bot' ? <span>Soul AI</span> : 'You'}</div>
+                <div className="message-name">
+                  {msg.role === 'bot' ? <span>Soul AI</span> : 'You'}
+                </div>
                 {msg.role === 'bot' ? (
                   <div className="bubble-wrap">
                     <div className="bubble bot"><p>{msg.text}</p></div>
@@ -137,7 +123,6 @@ function Chat() {
           <div ref={chatEndRef} style={{ height: 40 }} />
         </div>
 
-        {/* INPUT */}
         <div className="chat-input-area">
           <form className="chat-form" onSubmit={handleSubmit}>
             <input

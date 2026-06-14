@@ -1,33 +1,37 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useApp } from '../AppContext';
-import Sidebar from '../components/Sidebar';
 
 function History() {
   const { conversations } = useApp();
   const [expanded, setExpanded] = useState({});
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const toggle = (id) => setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
 
   return (
     <div className="app-layout">
-      <Sidebar onNewChat={() => {}} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <div className="main-content" style={{ overflowY: 'auto' }}>
-        <div className="topbar">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <button className="hamburger" onClick={() => setSidebarOpen(true)}>☰</button>
-            <h1>Past Conversations</h1>
-          </div>
-          <Link to="/" className="back-btn">← Back to Chat</Link>
+      <aside className="sidebar">
+        <div className="sidebar-logo">
+          <h2>Bot <span>AI</span></h2>
         </div>
+        <nav className="sidebar-nav">
+          <a href="/" className="sidebar-nav-link">New Chat</a>
+          <a href="/history" className="sidebar-nav-link">Past Conversations</a>
+          <a href="/feedback" className="sidebar-nav-link">All Feedback</a>
+        </nav>
+      </aside>
+
+      <div className="main-content" style={{ overflowY: 'auto' }}>
+        <header className="topbar">
+          <h1>Bot AI</h1>
+          <a href="/" className="back-btn">← Back to Chat</a>
+        </header>
 
         <div className="page-wrap">
+          <h2 style={{ marginBottom: 24, fontSize: '1.3rem' }}>Past Conversations</h2>
           {conversations.length === 0 ? (
             <div className="empty-state">
               <div style={{ fontSize: '3rem', marginBottom: 12 }}>💬</div>
               <p>No saved conversations yet.</p>
-              <p style={{ marginTop: 6 }}>Start a chat and save it to see it here.</p>
             </div>
           ) : (
             conversations.map(conv => (
@@ -37,19 +41,15 @@ function History() {
                     <h3>{conv.title}…</h3>
                     <div className="conv-meta" style={{ marginTop: 4 }}>
                       <span>{conv.date}</span>
-                      <span>{conv.messages.filter(m => m.role === 'user').length} questions</span>
                     </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     {conv.feedback?.rating > 0 && (
                       <span className="rating-badge">★ {conv.feedback.rating}/5</span>
                     )}
-                    <span style={{ color: '#9aa0b4', fontSize: '0.9rem' }}>
-                      {expanded[conv.id] ? '▲' : '▼'}
-                    </span>
+                    <span style={{ color: '#9aa0b4' }}>{expanded[conv.id] ? '▲' : '▼'}</span>
                   </div>
                 </div>
-
                 {expanded[conv.id] && (
                   <div className="conv-body">
                     {conv.messages.map((msg, i) =>
@@ -58,9 +58,9 @@ function History() {
                           <div className="conv-msg-q">You: {msg.text}</div>
                           {conv.messages[i + 1]?.role === 'bot' && (
                             <div className="conv-msg-a">
-                              <span>Soul AI: </span>{conv.messages[i + 1].text}
+                              Soul AI: {conv.messages[i + 1].text}
                               {conv.messages[i + 1].thumb && (
-                                <span style={{ marginLeft: 8, fontSize: '0.8rem' }}>
+                                <span style={{ marginLeft: 8 }}>
                                   {conv.messages[i + 1].thumb === 'like' ? '👍' : '👎'}
                                 </span>
                               )}
@@ -69,7 +69,6 @@ function History() {
                         </div>
                       ) : null
                     )}
-
                     {(conv.feedback?.rating > 0 || conv.feedback?.comment) && (
                       <div className="conv-feedback">
                         <div className="conv-feedback-title">Feedback</div>
@@ -79,9 +78,7 @@ function History() {
                           </div>
                         )}
                         {conv.feedback.comment && (
-                          <div style={{ fontSize: '0.875rem', color: '#9aa0b4' }}>
-                            {conv.feedback.comment}
-                          </div>
+                          <div style={{ fontSize: '0.875rem', color: '#9aa0b4' }}>{conv.feedback.comment}</div>
                         )}
                       </div>
                     )}
