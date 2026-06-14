@@ -6,7 +6,6 @@ import botData from '../botData';
 
 function getAnswer(question) {
   const q = question.toLowerCase().trim().replace('?', '');
-  // Try all matching strategies
   for (const item of botData) {
     const key = item.question.toLowerCase().trim().replace('?', '');
     if (key === q) return item.answer;
@@ -15,7 +14,6 @@ function getAnswer(question) {
     const key = item.question.toLowerCase().trim().replace('?', '');
     if (q.includes(key) || key.includes(q)) return item.answer;
   }
-  // Word overlap matching
   const qWords = q.split(/\s+/).filter(w => w.length > 3);
   for (const item of botData) {
     const key = item.question.toLowerCase().replace('?', '');
@@ -49,6 +47,16 @@ function Chat() {
 
   const handleThumb = (msgId, type) => {
     setThumbs(prev => ({ ...prev, [msgId]: prev[msgId] === type ? null : type }));
+  };
+
+  // Direct save — no modal, saves immediately to localStorage then goes to /history
+  const handleDirectSave = () => {
+    if (messages.length === 0) return;
+    const msgsWithFeedback = messages.map(m => ({ ...m, thumb: thumbs[m.id] || null }));
+    saveConversation(msgsWithFeedback, { rating: 0, comment: '' });
+    setMessages([]);
+    setThumbs({});
+    navigate('/history');
   };
 
   const handleSave = (feedback) => {
@@ -88,9 +96,24 @@ function Chat() {
           <h1>Bot AI</h1>
           <div className="topbar-actions">
             {messages.length > 0 && (
-              <button className="topbar-btn primary" type="button" onClick={() => setShowSaveModal(true)}>
-                Save Chat
-              </button>
+              <>
+                {/* Direct save button — type="button", saves without modal */}
+                <button
+                  type="button"
+                  className="topbar-btn"
+                  onClick={handleDirectSave}
+                >
+                  Save
+                </button>
+                {/* Save with feedback modal */}
+                <button
+                  type="button"
+                  className="topbar-btn primary"
+                  onClick={() => setShowSaveModal(true)}
+                >
+                  Save Chat
+                </button>
+              </>
             )}
           </div>
         </header>
