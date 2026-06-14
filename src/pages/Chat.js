@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import SaveModal from '../components/SaveModal';
 import { useApp } from '../AppContext';
 import botData from '../botData';
 
@@ -26,7 +25,6 @@ function getAnswer(question) {
 function Chat() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
-  const [showSaveModal, setShowSaveModal] = useState(false);
   const [thumbs, setThumbs] = useState({});
   const chatEndRef = useRef(null);
   const { conversations, saveConversation } = useApp();
@@ -49,20 +47,11 @@ function Chat() {
     setThumbs(prev => ({ ...prev, [msgId]: prev[msgId] === type ? null : type }));
   };
 
-  // Direct save — no modal, saves immediately to localStorage then goes to /history
-  const handleDirectSave = () => {
+  // Single save button — type="button", saves directly to localStorage, no modal
+  const handleSave = () => {
     if (messages.length === 0) return;
     const msgsWithFeedback = messages.map(m => ({ ...m, thumb: thumbs[m.id] || null }));
     saveConversation(msgsWithFeedback, { rating: 0, comment: '' });
-    setMessages([]);
-    setThumbs({});
-    navigate('/history');
-  };
-
-  const handleSave = (feedback) => {
-    const msgsWithFeedback = messages.map(m => ({ ...m, thumb: thumbs[m.id] || null }));
-    saveConversation(msgsWithFeedback, feedback);
-    setShowSaveModal(false);
     setMessages([]);
     setThumbs({});
     navigate('/history');
@@ -96,24 +85,9 @@ function Chat() {
           <h1>Bot AI</h1>
           <div className="topbar-actions">
             {messages.length > 0 && (
-              <>
-                {/* Direct save button — type="button", saves without modal */}
-                <button
-                  type="button"
-                  className="topbar-btn"
-                  onClick={handleDirectSave}
-                >
-                  Save
-                </button>
-                {/* Save with feedback modal */}
-                <button
-                  type="button"
-                  className="topbar-btn primary"
-                  onClick={() => setShowSaveModal(true)}
-                >
-                  Save Chat
-                </button>
-              </>
+              <button type="button" className="topbar-btn primary" onClick={handleSave}>
+                Save
+              </button>
             )}
           </div>
         </header>
@@ -164,10 +138,6 @@ function Chat() {
           </form>
         </div>
       </div>
-
-      {showSaveModal && (
-        <SaveModal onSave={handleSave} onCancel={() => setShowSaveModal(false)} />
-      )}
     </div>
   );
 }
