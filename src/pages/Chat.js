@@ -5,17 +5,24 @@ import { useApp } from '../AppContext';
 import botData from '../botData';
 
 function getAnswer(question) {
-  const q = question.toLowerCase().trim();
-  // Try exact match first
-  let match = botData.find(item => item.question.toLowerCase().trim() === q);
-  if (!match) {
-    // Try if question contains the key phrase
-    match = botData.find(item =>
-      q.includes(item.question.toLowerCase().replace('?', '').trim()) ||
-      item.question.toLowerCase().replace('?', '').trim().includes(q.replace('?', '').trim())
-    );
+  const q = question.toLowerCase().trim().replace('?', '');
+  // Try all matching strategies
+  for (const item of botData) {
+    const key = item.question.toLowerCase().trim().replace('?', '');
+    if (key === q) return item.answer;
   }
-  return match ? match.answer : "Sorry, Did not understand your query!";
+  for (const item of botData) {
+    const key = item.question.toLowerCase().trim().replace('?', '');
+    if (q.includes(key) || key.includes(q)) return item.answer;
+  }
+  // Word overlap matching
+  const qWords = q.split(/\s+/).filter(w => w.length > 3);
+  for (const item of botData) {
+    const key = item.question.toLowerCase().replace('?', '');
+    const matches = qWords.filter(w => key.includes(w));
+    if (matches.length >= 2) return item.answer;
+  }
+  return "Sorry, Did not understand your query!";
 }
 
 function Chat() {
@@ -55,7 +62,6 @@ function Chat() {
 
   return (
     <div className="app-layout">
-      {/* SIDEBAR — only ONE link each to /history and / */}
       <aside className="sidebar">
         <div className="sidebar-logo">
           <h2>Bot <span>AI</span></h2>
@@ -78,7 +84,6 @@ function Chat() {
       </aside>
 
       <div className="main-content">
-        {/* HEADER — h1 must say exactly "Bot AI" */}
         <header className="topbar">
           <h1>Bot AI</h1>
           <div className="topbar-actions">

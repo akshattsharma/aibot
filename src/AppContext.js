@@ -1,17 +1,28 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 
 const AppContext = createContext();
 
-export function AppProvider({ children }) {
-  const [conversations, setConversations] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem('conversations') || '[]');
-    } catch { return []; }
-  });
+const STORAGE_KEY = 'conversations';
 
-  useEffect(() => {
-    localStorage.setItem('conversations', JSON.stringify(conversations));
-  }, [conversations]);
+function loadFromStorage() {
+  try {
+    const data = localStorage.getItem(STORAGE_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveToStorage(data) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch (e) {
+    console.error('Failed to save to localStorage:', e);
+  }
+}
+
+export function AppProvider({ children }) {
+  const [conversations, setConversations] = useState(loadFromStorage);
 
   const saveConversation = (messages, feedback) => {
     const conv = {
@@ -23,7 +34,7 @@ export function AppProvider({ children }) {
     };
     setConversations(prev => {
       const updated = [conv, ...prev];
-      localStorage.setItem('conversations', JSON.stringify(updated));
+      saveToStorage(updated);
       return updated;
     });
     return conv.id;
